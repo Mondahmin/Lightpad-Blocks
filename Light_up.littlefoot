@@ -1,0 +1,98 @@
+/*
+<metadata>
+    description="Light up" 
+    details="Lighting where toutched"
+    target="Lightpad" 
+    tags="My Apps;"
+    
+    <variables>
+        <variable name="channel" displayName="MIDI Channel" type="int" min="1" max="16" value="1" displayMode="stepper" tooltip="The MIDI channel that values are sent on" />
+    </variables>
+</metadata>
+*/
+
+int ccX;
+int ccY;
+int ccZ;
+int red;
+int orange;
+int yellow;
+int green;
+int skyblue;
+int blue;
+int purple;
+int num;
+
+
+void initialise()
+{
+	for (int i = 0; i < 32; ++i)
+        setLocalConfigActiveState (i, false, false);
+        red = 0xffff0000;
+        orange = 0xffffa500;
+        yellow = 0xffffff00;
+        green = 0xff008000;
+        skyblue = 0xff00ffff;
+        blue = 0xff0000ff;
+        purple = 0xff900090;
+        num = 0;
+}
+
+int Color(int N){
+    int m = N%7;
+    
+    if(m == 0){return red}
+    else if(m == 1){return orange}
+    else if(m == 2){return yellow}
+    else if(m == 3){return green}
+    else if(m == 4){return skyblue}
+    else if(m == 5){return blue}
+    else{return purple}   
+}
+
+void touchStart (int index, float x, float y, float z, float vz)
+{
+    addPressurePoint (Color(num), x, y, z *10.0);
+    ccX = int(map(x, 0.07, 1.93, 0.0, 127.0));//exchange x-coordinate data(0.07~1.93) to (0~127)
+    ccY = int(map(y, 0.07, 1.93, 0.0, 127.0));//exchange y-coordinate data(0.07~1.93) to (0~127)
+    ccZ = int(map(z, 0.0, 1.0, 0.0, 127.0));//exchange z-coordinate(pressure) data(0.0~1.0) to (0~127)
+    sendCC ((channel - 1), 60, ccX);//x-coordinate CC60
+    sendCC ((channel - 1), 61, ccY);//y-coordinate CC61
+    sendCC ((channel - 1), 62, ccZ);//pressure CC62
+}
+
+void touchMove (int index, float x, float y, float z, float vz)
+{
+    addPressurePoint (Color(num), x, y, z *10.0);
+    ccX = int(map(x, 0.07, 1.93, 0.0, 127.0));//exchange x-coordinate data(0.07~1.93) to (0~127)
+    ccY = int(map(y, 0.07, 1.93, 0.0, 127.0));//exchange y-coordinate data(0.07~1.93) to (0~127)
+    ccZ = int(map(z, 0.0, 1.0, 0.0, 127.0));//exchange z-coordinate(pressure) data(0.0~1.0) to (0~127)
+    sendCC ((channel - 1), 60, ccX);//x-coordinate CC60
+    sendCC ((channel - 1), 61, ccY);//y-coordinate CC61
+    sendCC ((channel - 1), 62, ccZ);//pressure CC62
+    num += 1;
+}
+
+void touchEnd (int touchIndex, float x, float y, float z, float vz)
+{
+    ccX = 0;
+    ccY = 0;
+    ccZ = 0;
+    sendCC ((channel - 1), 60, ccX);//x-coordinate CC60
+    sendCC ((channel - 1), 61, ccY);//y-coordinate CC61
+    sendCC ((channel - 1), 62, ccZ);//y-coordinate CC61
+}
+
+void repaint()
+{
+    clearDisplay();
+    drawPressureMap();//draw finger track
+    
+    fadePressureMap();//fade out former track gradually
+    /*
+    drawNumber(ccX, 0xffff0000, 0, 0);
+    drawNumber(ccY, 0xff00ff00, 0, 5); 
+    drawNumber(ccZ, 0xff0000ff, 0, 10); 
+    */
+}
+
