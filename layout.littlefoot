@@ -1,0 +1,142 @@
+/*
+<metadata>
+    description="Layout 0" 
+    details="Lighting where toutched"
+    target="Lightpad" 
+    tags="My Apps;"
+    
+    <variables>
+        <variable name="channel" displayName="MIDI Channel" type="int" min="1" max="16" value="1" displayMode="stepper" tooltip="The MIDI channel that values are sent on" />
+    </variables>
+</metadata>
+*/
+
+int ccX;
+int ccY;
+int ccZ;
+int red;
+int orange;
+int yellow;
+int green;
+int skyblue;
+int blue;
+int purple;
+int num;
+bool isplay;
+bool isshuffle;
+
+int View;
+const int playView = 0;
+const int stopView = 1;
+
+
+
+void initialise()
+{
+    for (int i = 0; i < 32; ++i) setLocalConfigActiveState (i, false, false);
+        red = 0xffff0000;
+        orange = 0xffffa500;
+        yellow = 0xffffff00;
+        green = 0xff008000;
+        skyblue = 0xff00ffff;
+        blue = 0xff0000ff;
+        purple = 0xff900090;
+        num = 0;
+        isplay=false;
+        isshuffle=false;
+        View = 0;
+}
+
+void iTunes_layout()
+{
+    fillRect(0xff008000,0,0,15,1); //progress bar
+    
+    
+    fillRect(0xffff0000,1,2,2,1); //shuffle & loop
+    fillRect(0xffff0000,4,2,2,1);
+    fillRect(0xffff0000,11,2,2,1);
+    fillPixel(0xffff0000,3,3);
+    fillRect(0xffff0000,9,2,1,2);
+    fillRect(0xffff0000,13,3,1,2);
+    fillRect(0xffff0000,1,4,2,1);
+    fillRect(0xffff0000,4,4,2,1);
+    fillRect(0xffff0000,10,4,2,1);
+    
+    if(View == 0){
+        fillRect(0x9f008000,6,6,1,5); // play 
+        fillRect(0xf0008000,7,7,1,3);
+        fillPixel(0x9f008000,8,8);
+    }else{ 
+        fillRect(0x9f0000ff,6,7,1,3); // stop
+        fillRect(0x9f0000ff,8,7,1,3);
+    }
+    
+    
+    fillRect(0xff900090,2,11,3,3); // back & next
+    fillPixel(0xff900090,1,12);
+    fillRect(0xff900090,10,11,3,3);
+    fillPixel(0xff900090,13,12);    
+}
+
+int Color(int N){
+    int m = N%7;    
+    
+    if(m == 0){return red}
+    else if(m == 1){return orange}
+    else if(m == 2){return yellow}
+    else if(m == 3){return green}
+    else if(m == 4){return skyblue}
+    else if(m == 5){return blue}
+    else{return purple}   
+}
+
+void touchStart (int index, float x, float y, float z, float vz)
+{
+    addPressurePoint (Color(num), x, y, z *10.0);
+    ccX = int(map(x, 0.07, 1.93, 0.0, 127.0));//exchange x-coordinate data(0.07~1.93) to (0~127)
+    ccY = int(map(y, 0.07, 1.93, 0.0, 127.0));//exchange y-coordinate data(0.07~1.93) to (0~127)
+    ccZ = int(map(z, 0.0, 1.0, 0.0, 127.0));//exchange z-coordinate(pressure) data(0.0~1.0) to (0~127)
+    sendCC ((channel - 1), 60, ccX);//x-coordinate CC60
+    sendCC ((channel - 1), 61, ccY);//y-coordinate CC61
+    sendCC ((channel - 1), 62, ccZ);//pressure CC62
+}
+
+void touchMove (int index, float x, float y, float z, float vz)
+{
+    addPressurePoint (Color(num), x, y, z *10.0);
+    ccX = int(map(x, 0.07, 1.93, 0.0, 127.0));//exchange x-coordinate data(0.07~1.93) to (0~127)
+    ccY = int(map(y, 0.07, 1.93, 0.0, 127.0));//exchange y-coordinate data(0.07~1.93) to (0~127)
+    ccZ = int(map(z, 0.0, 1.0, 0.0, 127.0));//exchange z-coordinate(pressure) data(0.0~1.0) to (0~127)
+    sendCC ((channel - 1), 60, ccX);//x-coordinate CC60
+    sendCC ((channel - 1), 61, ccY);//y-coordinate CC61
+    sendCC ((channel - 1), 62, ccZ);//pressure CC62
+    num += 1;
+}
+
+void touchEnd (int touchIndex, float x, float y, float z, float vz)
+{
+    ccX = 0;
+    ccY = 0;
+    ccZ = 0;
+    sendCC ((channel - 1), 60, ccX);//x-coordinate CC60
+    sendCC ((channel - 1), 61, ccY);//y-coordinate CC61
+    sendCC ((channel - 1), 62, ccZ);//y-coordinate CC61
+}
+
+void handleButtonDown(int index)
+{
+    if (View == playView)
+        View = stopView;
+    else View = playView;
+    
+}
+
+
+void repaint()
+{
+    clearDisplay();
+    drawPressureMap();
+    fadePressureMap();
+    iTunes_layout();
+
+}
