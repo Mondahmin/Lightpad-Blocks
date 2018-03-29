@@ -1,13 +1,13 @@
 /*
 <metadata>
-    description="Layout 0" 
-    details="check layout"
+    description="waves" 
+    details="draw wave"
     target="Lightpad" 
     tags="My Apps;"
     
     <variables>
-        //<variable name="channel" displayName="MIDI Channel" type="int" min="1" max="16" value="1" displayMode="stepper" tooltip="The MIDI channel that values are sent on" />
         <variable name="mode" displayName="Mode" type="int" min="1" max="2" value="1" displaymode="stepper" tooltip="change mode" />
+        
     </variables>
 </metadata>
 */
@@ -15,73 +15,57 @@
 int ccX;
 int ccY;
 int ccZ;
-int red;
-int orange;
-int yellow;
-int green;
-int skyblue;
-int blue;
-int purple;
+const int red = 0x90ff0000;
+const int orange = 0x90ffa500;
+const int yellow = 0x90ffff00;
+const int green = 0x90008000;
+const int skyblue = 0x9000ffff;
+const int blue = 0x900000ff;
+const int purple = 0x90900090;
+const int white = 0x90ffffff;
 int num;
+int ycord;
 int time;
-bool isplay;
-bool isshuffle;
-
-/*
-int View;
-const int playView = 0;
-const int stopView = 1;
-*/
-
-
 
 void initialise()
 {
     for (int i = 0; i < 32; ++i) setLocalConfigActiveState (i, false, false);
         //color
-        red = 0xffff0000;
-        orange = 0xffffa500;
-        yellow = 0xffffff00;
-        green = 0xff008000;
-        skyblue = 0xff00ffff;
-        blue = 0xff0000ff;
-        purple = 0xff900090;
         num = 0;
-        isplay=false;
-        isshuffle=false;
-        //View = 0;
         time = 0;
 }
 
-void iTunes_layout()
-{
-    fillRect(0xff008000,0,0,15,1); //progress bar
-    
-    
-    fillRect(0xffff0000,1,2,2,1); //shuffle & loop
-    fillRect(0xffff0000,4,2,2,1);
-    fillRect(0xffff0000,11,2,2,1);
-    fillPixel(0xffff0000,3,3);
-    fillRect(0xffff0000,9,2,1,2);
-    fillRect(0xffff0000,13,3,1,2);
-    fillRect(0xffff0000,1,4,2,1);
-    fillRect(0xffff0000,4,4,2,1);
-    fillRect(0xffff0000,10,4,2,1);
-    
-    if(mode == 1){
-        fillRect(0x9f008000,6,6,1,5); // play 
-        fillRect(0xf0008000,7,7,1,3);
-        fillPixel(0x9f008000,8,8);
-    }else{ 
-        fillRect(0x9f0000ff,6,7,1,3); // stop
-        fillRect(0x9f0000ff,8,7,1,3);
+void wave_layout()
+{   
+    int t = ycord(getMillisecondCounter()/100);
+    for(int i = 0; i<15; i++)
+    {   
+        if(t+i >= 15){
+            fillPixel(red,i,(t+i)%15);
+            fillPixel(orange,i,((t+i)%15+1)%15);
+            fillPixel(yellow,i,((t+i)%15+2)%15);
+            fillPixel(green,i,((t+i)%15+3)%15);
+            fillPixel(skyblue,i,((t+i)%15+4)%15);
+            fillPixel(blue,i,((t+i)%15+5)%15);
+            fillPixel(purple,i,((t+i)%15+6)%15);
+        }
+
+        else{
+            fillPixel(red,i,(t+i)%15);
+            fillPixel(orange,i,(t+i+1)%15);
+            fillPixel(yellow,i,(t+i+2)%15);
+            fillPixel(green,i,(t+i+3)%15);
+            fillPixel(skyblue,i,(t+i+4)%15);
+            fillPixel(blue,i,(t+i+5)%15);
+            fillPixel(purple,i,(t+i+6)%15);
+        }
     }
-    
-    
-    fillRect(0xffff0000,2,11,3,3); // back & next
-    fillPixel(0xffff0000,1,12);
-    fillRect(0xffff0000,10,11,3,3);
-    fillPixel(0xffff0000,13,12);    
+}
+
+int ycord(int T)
+{
+    int y = T%15;
+    return y;
 }
 
 int Color(int N){
@@ -150,7 +134,5 @@ void repaint()
     clearDisplay();
     drawPressureMap();
     fadePressureMap();
-    iTunes_layout();
-    time = getTimeInCurrentFunctionCall();
-    drawNumber(time,0xffffffff,0,5);
+    wave_layout();
 }

@@ -1,6 +1,6 @@
 /*
 <metadata description="Minimal XYZ Pad" details="XY pad with the addition of pressure (Z), sending out MIDI CC. You can set MIDI channel."
-          target="Lightpad" 
+          target="Lightpad"
           tags="MIDI;Controller;">
     <variables>
         <variable name="channel" displayName="MIDI Channel" type="int" min="1" max="16" value="1" displayMode="stepper" tooltip="The MIDI channel that values are sent on" />
@@ -56,6 +56,6 @@ void repaint()
     drawPressureMap();//指の軌跡を描画する
     fadePressureMap();//古い軌跡から徐々にフェードアウト
     drawNumber(ccX, 0xffff0000, 0, 0);
-    drawNumber(ccY, 0xff00ff00, 0, 5); 
-    drawNumber(ccZ, 0xff0000ff, 0, 10); 
+    drawNumber(ccY, 0xff00ff00, 0, 5);
+    drawNumber(ccZ, 0xff0000ff, 0, 10);
 }
