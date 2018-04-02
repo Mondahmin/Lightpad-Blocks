@@ -15,14 +15,24 @@
 int ccX;
 int ccY;
 int ccZ;
-const int red = 0x90ff0000;
-const int orange = 0x90ffa500;
-const int yellow = 0x90ffff00;
-const int green = 0x90008000;
-const int skyblue = 0x9000ffff;
-const int blue = 0x900000ff;
-const int purple = 0x90900090;
-const int white = 0x90ffffff;
+const int red = 0xffff0000;
+const int orange = 0xffffa500;
+const int yellow = 0xffffff00;
+const int green = 0xff008000;
+const int skyblue = 0xff00ffff;
+const int blue = 0xff0000ff;
+const int purple = 0xff900090;
+const int white = 0xffffffff;
+
+const int B7 = 0x80007fb1;
+const int B6 = 0x801b8ebc;
+const int B5 = 0x80399fc7;
+const int B4 = 0x805ab0d2;
+const int B3 = 0x807fc3de;
+const int B2 = 0x80a6d7e9;
+const int B1 = 0x80d1eaf4;
+const int B0 = 0x80ffffff;
+
 int num;
 int ycord;
 int time;
@@ -30,7 +40,6 @@ int time;
 void initialise()
 {
     for (int i = 0; i < 32; ++i) setLocalConfigActiveState (i, false, false);
-        //color
         num = 0;
         time = 0;
 }
@@ -41,23 +50,40 @@ void wave_layout()
     for(int i = 0; i<15; i++)
     {   
         if(t+i >= 15){
-            fillPixel(red,i,(t+i)%15);
-            fillPixel(orange,i,((t+i)%15+1)%15);
-            fillPixel(yellow,i,((t+i)%15+2)%15);
-            fillPixel(green,i,((t+i)%15+3)%15);
-            fillPixel(skyblue,i,((t+i)%15+4)%15);
-            fillPixel(blue,i,((t+i)%15+5)%15);
-            fillPixel(purple,i,((t+i)%15+6)%15);
+            fillPixel(B7,i,(t+i)%15);
+            fillPixel(B6,i,((t+i)%15+1)%15);
+            fillPixel(B5,i,((t+i)%15+2)%15);
+            fillPixel(B4,i,((t+i)%15+3)%15);
+            fillPixel(B3,i,((t+i)%15+4)%15);
+            fillPixel(B2,i,((t+i)%15+5)%15);
+            fillPixel(B1,i,((t+i)%15+6)%15);
+            fillPixel(B0,i,((t+i)%15+7)%15);
+            fillPixel(B1,i,((t+i)%15+8)%15);
+            fillPixel(B2,i,((t+i)%15+9)%15);
+            fillPixel(B3,i,((t+i)%15+10)%15);
+            fillPixel(B4,i,((t+i)%15+11)%15);
+            fillPixel(B5,i,((t+i)%15+12)%15);
+            fillPixel(B6,i,((t+i)%15+13)%15);
+            fillPixel(B7,i,((t+i)%15+14)%15);
+            
         }
 
         else{
-            fillPixel(red,i,(t+i)%15);
-            fillPixel(orange,i,(t+i+1)%15);
-            fillPixel(yellow,i,(t+i+2)%15);
-            fillPixel(green,i,(t+i+3)%15);
-            fillPixel(skyblue,i,(t+i+4)%15);
-            fillPixel(blue,i,(t+i+5)%15);
-            fillPixel(purple,i,(t+i+6)%15);
+            fillPixel(B7,i,(t+i)%15);
+            fillPixel(B6,i,(t+i+1)%15);
+            fillPixel(B5,i,(t+i+2)%15);
+            fillPixel(B4,i,(t+i+3)%15);
+            fillPixel(B3,i,(t+i+4)%15);
+            fillPixel(B2,i,(t+i+5)%15);
+            fillPixel(B1,i,(t+i+6)%15);
+            fillPixel(B0,i,(t+i+7)%15);
+            fillPixel(B1,i,(t+i+8)%15);
+            fillPixel(B2,i,(t+i+9)%15);
+            fillPixel(B3,i,(t+i+10)%15);
+            fillPixel(B4,i,(t+i+11)%15);
+            fillPixel(B5,i,(t+i+12)%15);
+            fillPixel(B6,i,(t+i+13)%15);
+            fillPixel(B7,i,(t+i+14)%15);
         }
     }
 }
@@ -132,7 +158,7 @@ void handleButtonDown(int index)
 void repaint()
 {
     clearDisplay();
+    wave_layout();
     drawPressureMap();
     fadePressureMap();
-    wave_layout();
 }
