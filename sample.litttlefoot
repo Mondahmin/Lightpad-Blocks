@@ -1,0 +1,811 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf820
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww15700\viewh14180\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 /*\
+\
+8 Step Sequencer app for the Lightpad Block, created by Liam Lacey.\
+\
+A simple 8-step monophonic MIDI step sequencer, which contains the following \
+controls on the Lightpad's surface:\
+\
+- 8 sliders for setting a step's note (from a set scale), or for turning the step off\
+- A slider on the right side for setting the sequence tempo\
+- A button on the top-right corner that, when held, allows you to \
+  apply pressure to the note sliders to set the notes velocity\
+  \
+The button the side of the Lightpad starts/stop the sequence.\
+The sequence can also be started/stopped via MIDI start/continue/stop messages.\
+\
+The following settings can be set from BLOCKS Dashboard:\
+\
+- MIDI Channel - sets the MIDI channel of the sequence\
+- Scale - sets the scale of notes that can be played\
+- Root Note - sets the root note of the scale\
+- Sync To MIDI Clock - When 'on' the sequence will sync to an external MIDI clock\
+\
+*/\
+\
+//==============================================================================\
+//==============================================================================\
+//==============================================================================\
+//Metadata section for setting the apps appearance and providing controls in\
+//BLOCKS Dashboard. Also useful for creating arrays-type variables for your script.\
+\
+/*\
+<metadata description="A simple 8-step monophonic MIDI step sequencer" target="Lightpad" tags="MIDI;Sequencer;">\
+	<variables>\
+	\
+	    <variable name="midiChannel" displayName="MIDI Channel" type="int" min="1" max="16" value="1" displayMode="stepper" />\
+	    <variable name="noteScaleIndex" displayName="Scale" type="option" value="Major Pentatonic" options="Chromatic;Major;Major Pentatonic;Minor;Minor Pentatonic;Melodic Minor;Blues;Stranger Things" />\
+	    <variable name="rootNote" displayName="Root Note" type="int" min="0" max="127" value="60" displayMode="stepper" />\
+	    <variable name="midiSync" displayName="Sync To MIDI Clock" type="option" value="Off" options="Off;On;" />\
+        \
+	    <vector count="8" wantsGetFunctions="true" wantsSetFunctions="true">\
+            <variable name="stepSlider" type="int" min="0" max="6" value="0" visible="false" />\
+        </vector>\
+        <vector count="8" wantsGetFunctions="true" wantsSetFunctions="true">\
+            <variable name="stepVelocity" type="float" min="0" max="1" value="1" visible="false" />\
+        </vector>\
+        <vector count="6" wantsGetFunctions="true" wantsSetFunctions="true">\
+            <variable name="noteScale" type="int" min="0" max="127" value="0" visible="false" />\
+        </vector>\
+        \
+	</variables>\
+</metadata>\
+*/\
+\
+//==============================================================================\
+//==============================================================================\
+//==============================================================================\
+//Global Variables\
+\
+//Variable that stores the current playing state of the sequencer (false or true)\
+bool playingState;\
+//Variable that stores the currently active step number in the sequence (0-7)\
+int currentStepNum;\
+\
+//Variable that stores the value of the tempo slider (1-12)\
+int tempoSlider;\
+//Variable that stores whether touching step sliders will set note number of velocity (0-1)\
+int editMode;\
+\
+//Variable that is used to create an internal timer/clock for playing the sequence\
+//without using an external MIDI clock\
+int timerTime;\
+//Variable that is used to allow the sequence to be synced to an external MIDI clock\
+int midiClockCounter;\
+\
+/*\
+The above metadata section also creates the following array-type global variables:\
+\
+- stepSlider: stores the values of the step/note sliders (0-6)\
+- stepVelocity: stores the values of the step slider pressure (0.0-1.0)\
+- noteScale: stores the note intervals of each note in the scale (0-127)\
+*/\
+\
+//==============================================================================\
+//==============================================================================\
+//==============================================================================\
+//Function that initialises the app, called when the app starts.\
+\
+void initialise()\
+\{\
+    //==============================================================================\
+    //Init all global variables to default values\
+    \
+	for (int i = 0; i < 8; ++i)\
+    \{\
+        setStepSlider (i, 1);\
+        setStepVelocity (i, 1.0);\
+    \}\
+    \
+    tempoSlider = 4;\
+    editMode = 0;\
+    \
+    playingState = false;\
+    currentStepNum = 0;\
+    timerTime = 0;\
+    midiClockCounter = 0;\
+    \
+    //==============================================================================\
+    //Set note scale intervals based on set scale...\
+    \
+    //Chromatic\
+    if (noteScaleIndex == 0)\
+    \{\
+        setNoteScale(0, 0);\
+        setNoteScale(1, 1);\
+        setNoteScale(2, 2);\
+        setNoteScale(3, 3);\
+        setNoteScale(4, 4);\
+        setNoteScale(5, 5);\
+    \}\
+    //Major\
+    else if (noteScaleIndex == 1)\
+    \{\
+        setNoteScale(0, 0);\
+        setNoteScale(1, 2);\
+        setNoteScale(2, 4);\
+        setNoteScale(3, 5);\
+        setNoteScale(4, 7);\
+        setNoteScale(5, 9);\
+    \}\
+    //Major Pentatonic\
+    else if (noteScaleIndex == 2)\
+    \{\
+        setNoteScale(0, 0);\
+        setNoteScale(1, 2);\
+        setNoteScale(2, 4);\
+        setNoteScale(3, 7);\
+        setNoteScale(4, 9);\
+        setNoteScale(5, 12);\
+    \}\
+    //Minor\
+    else if (noteScaleIndex == 3)\
+    \{\
+        setNoteScale(0, 0);\
+        setNoteScale(1, 2);\
+        setNoteScale(2, 3);\
+        setNoteScale(3, 5);\
+        setNoteScale(4, 7);\
+        setNoteScale(5, 8);\
+    \}\
+    //Minor Pentatonic\
+    else if (noteScaleIndex == 4)\
+    \{\
+        setNoteScale(0, 0);\
+        setNoteScale(1, 3);\
+        setNoteScale(2, 5);\
+        setNoteScale(3, 7);\
+        setNoteScale(4, 10);\
+        setNoteScale(5, 12);\
+    \}\
+    //Melodic Minor\
+    else if (noteScaleIndex == 5)\
+    \{\
+        setNoteScale(0, 0);\
+        setNoteScale(1, 2);\
+        setNoteScale(2, 3);\
+        setNoteScale(3, 5);\
+        setNoteScale(4, 7);\
+        setNoteScale(5, 9);\
+    \}\
+    //Blues\
+    else if (noteScaleIndex == 6)\
+    \{\
+        setNoteScale(0, 0);\
+        setNoteScale(1, 3);\
+        setNoteScale(2, 5);\
+        setNoteScale(3, 6);\
+        setNoteScale(4, 7);\
+        setNoteScale(5, 10);\
+    \}\
+    //Stranger Things\
+    else if (noteScaleIndex == 7)\
+    \{\
+        setNoteScale(0, 0);\
+        setNoteScale(1, 4);\
+        setNoteScale(2, 7);\
+        setNoteScale(3, 11);\
+        setNoteScale(4, 12);\
+        setNoteScale(5, 16);\
+    \}\
+    \
+    //Local config items are a set of parameters that can be used for adding \
+    //Dashboard control and/or flash storage. We don't want to use any of\
+    //the factory config items, so disable them all.\
+    for (int i = 0; i < 64; ++i)\
+        setLocalConfigActiveState (i, false, false);\
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//==============================================================================\
+//FUNCTIONS THAT HANDLE TOUCH EVENTS/INTERACTIONS...\
+\
+//==============================================================================\
+//==============================================================================\
+//Function that is called when there is a new touch on the Lightpad surface\
+\
+void touchStart (int index, float x, float y, float z, float vz)\
+\{\
+    //process the touch\
+	processTouch (x, y, z);\
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//Function that is called when there is a touch move on the Lightpad surface\
+\
+void touchMove (int index, float x, float y, float z, float vz)\
+\{\
+    //process the touch\
+    processTouch (x, y, z);\
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//Function that is called when a touch is removed from the Lightpad surface\
+\
+void touchEnd (int index, float x, float y, float z, float vz)\
+\{\
+    //set editMode to 0 so that touching the step sliders will change\
+    //the note number rather than the note velocity\
+    editMode = 0;\
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//Custom function that processes the touch on the Lightpad surface.\
+//It has the following arguments:\
+//x: the x/horizontal position of the touch, in the range of 0-2\
+//y: the y/vertical position of the touch, in the range of 0-2\
+//z: the pressure value of the touch, in the range of 0-1\
+\
+void processTouch (float x, float y, float z)\
+\{\
+	//Convert the x and y position values\
+    //to values between 0-14 to match to LED/pixel range.\
+	int x_int = convertPositionToPixel(x);\
+	int y_int = convertPositionToPixel(y);\
+    \
+	//==============================================================================\
+    //if touching the top row of step sliders\
+    if (x_int < 12 && y_int <= 6)\
+    \{\
+        //get the step slider index/number in the row\
+        int step_index = getStepSliderIndexInRow(x_int);\
+            \
+        //if in 'note' edit mode\
+        if (editMode == 0)\
+        \{\
+            //work out a step slider value based on the y posItion\
+            int step_val = 6 - y_int;\
+            step_val = clamp (0, 6, step_val);\
+            \
+            //if this step is the currently playing step\
+            //and new value is different from the previous value\
+            if (step_index == currentStepNum && \
+                playingState == true &&\
+                step_val != getStepSlider(step_index))\
+            \{\
+                //stop the note of this step\
+                sendNoteOffForCurrentStep();\
+            \}\
+            \
+            //store the step slider value\
+            setStepSlider (step_index, step_val);\
+        \}\
+        \
+        //if in 'velocity' edit mode\
+        else\
+        \{\
+            //store a velocity value based on the pressure value\
+            setStepVelocity (step_index, z);\
+        \}\
+    \}\
+    \
+    //==============================================================================\
+    //if touching the bottom row of step sliders\
+    else if (x_int < 12 && y_int >= 7)\
+    \{\
+        //get the step slider index/number in the row\
+        int step_index = getStepSliderIndexInRow(x_int) + 4;\
+        \
+        //if in 'note' edit mode\
+        if (editMode == 0)\
+        \{\
+            //work out a step slider value based on the y position\
+            int step_val = 7 - (y_int - 7);\
+            step_val = clamp (0, 6, step_val);\
+            \
+            //if this step is the currently playing step\
+            //and new value is different from the previous value\
+            if (step_index == currentStepNum && \
+                playingState == true &&\
+                step_val != getStepSlider(step_index))\
+            \{\
+                //stop the note of this step\
+                sendNoteOffForCurrentStep();\
+            \}\
+\
+            //store the step slider value\
+            setStepSlider (step_index, step_val);\
+        \}\
+        \
+        //if in 'velocity' edit mode\
+        else\
+        \{\
+            //store a velocity value based on the pressure value\
+            setStepVelocity (step_index, z);\
+        \}\
+    \}\
+    \
+    //==============================================================================\
+    //if touching the 'edit mode' button\
+	else if (x_int >= 13 && y_int <= 2)\
+    \{\
+        //set editMode to 1 so that touching the step sliders will change\
+        //the note velocity rather than the note number\
+        editMode = 1;\
+    \}\
+    \
+    //==============================================================================\
+    //if touching the tempo slider\
+    else if (x_int >= 13 && y_int > 2)\
+    \{\
+        //set a tempo slider value based on the y position\
+        tempoSlider = 15 - y_int;\
+        tempoSlider = clamp (0, 13, tempoSlider);\
+    \}\
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//Function that is called when the button the side of the Lightpad is pressed\
+\
+void handleButtonDown (int index)\
+\{\
+    //toggle the playing state\
+    playingState = !playingState;\
+    \
+    //start or stop the sequence\
+    setSequenceTransport();\
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//Custom function that converts a touch position (roughly 0-2)\
+//to an LED/pixel position (0-14)\
+int convertPositionToPixel (float pos) \
+\{ \
+    //the Lightpad surface x/y position values may not be exactly 0-2\
+    //so assume the upper value may be a bit less than 2.\
+    return int (map (pos, 0.0, 1.9, 0.0, 14.0)); \
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//Custom function that returns the step slider's index/number \
+//based on an x position value.\
+\
+int getStepSliderIndexInRow (int x_pixel)\
+\{\
+    if (x_pixel < 3)\
+        return 0;\
+    else if (x_pixel < 6)\
+        return 1;\
+    else if (x_pixel < 9)\
+        return 2;\
+    else if (x_pixel < 12)\
+        return 3;\
+        \
+    return -1;  \
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//==============================================================================\
+//FUNCTIONS THAT PROCESS THE BACKEND SEQUENCE OF MIDI NOTES...\
+\
+\
+//==============================================================================\
+//==============================================================================\
+//Custom function that triggers the sequence to start or stop\
+\
+void setSequenceTransport()\
+\{ \
+    //if starting the sequence\
+    if (playingState)\
+    \{\
+       //reset needed variables so that the sequence starts in\
+       //the correct place \
+       currentStepNum = 0;\
+       midiClockCounter = 0;\
+       //store the time that this step is played\
+       timerTime = getMillisecondCounter();	\
+\
+       //send the MIDI note-on message for the start of the sequence\
+       sendNoteOnForCurrentStep();\
+    \}\
+    \
+    //if stopping the sequence\
+    else\
+    \{\
+        //stop the currently playing MIDI note of the sequence\
+        sendNoteOffForCurrentStep();\
+    \}\
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//Custom function that processes the running the sequence\
+//based on an internal timer/clock (rather than using an external MIDI clock)\
+\
+void processSequenceInternally()\
+\{\
+    //if currently playing the sequence\
+    if (playingState == true)\
+    \{\
+        //get a time interval for the steps/notes of the sequence\
+        //based on the value of the tempo slider\
+        int interval = int (map (float(tempoSlider), 1.0, 12.0, 400.0, 20.0));\
+        \
+        //if the time interval time has passed since the previous\
+        //step/note was played\
+        if (getMillisecondCounter() - timerTime > interval)\
+        \{\
+            timerTime = getMillisecondCounter();	\
+\
+            //process a new step of the sequence\
+            processStep(); \
+        \}\
+    \}	\
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//Custom function that processes a single step of the sequence\
+\
+void processStep()\
+\{\
+    //first stop the currently playing MIDI note\
+    sendNoteOffForCurrentStep();\
+       \
+    //next increment to the next step number, wrapping round to\
+    //the beginning if reached the end.\
+    currentStepNum++;   \
+    if (currentStepNum == 8)\
+        currentStepNum = 0;\
+            \
+    //finally send a MIDI-note on message for the new step\
+    sendNoteOnForCurrentStep();\
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//Custom function that sends a MIDI note-on message for the current step\
+\
+void sendNoteOnForCurrentStep()\
+\{\
+    //if the steps slider value is not 0 \
+    //(which signifies the step is off and shouldn't create a note)\
+    if (getStepSlider(currentStepNum) > 0)\
+    \{\
+        //create a MIDI note number based on the set root note and\
+        //the steps slider value as an index to a note in the set scale.\
+        int note_num = rootNote + getNoteScale (getStepSlider(currentStepNum) - 1);\
+        //create a velocity value by mapping the steps velocity value to\
+        //between 24 and 127.\
+        int velocity = int(map (getStepVelocity(currentStepNum), 0.0, 1.0, 24.0, 127.0));\
+    \
+        //Send the MIDI note-on message.\
+        //Don't use the sendNoteOn function here, as that is currently used for\
+        //sending notes as part of the MPE protocol and therefore also sends CC 74 messages.\
+        //However this may change in the future.\
+        //Therefore instead use sendMIDI using the note-on status byte value (0x90).\
+        sendMIDI (0x90 + (midiChannel - 1), note_num, velocity);\
+    \}\
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//Custom function that sends a MIDI note-off message for the current step\
+\
+void sendNoteOffForCurrentStep()\
+\{\
+    //if the steps slider value is not 0 \
+    //(which signifies the step is off and shouldn't create a note)\
+    if (getStepSlider(currentStepNum) > 0)\
+    \{\
+        //create a MIDI note number based on the set root note and\
+        //the steps slider value as an index to a note in the set scale.\
+        int note_num = rootNote + getNoteScale (getStepSlider(currentStepNum) - 1);\
+        //create a velocity value by mapping the steps velocity value to\
+        //between 24 and 127.\
+        int velocity = int(map (getStepVelocity(currentStepNum), 0.0, 1.0, 24.0, 127.0));\
+    \
+        //Send the MIDI note-off message\
+        //Don't use the sendNoteOn function here, as that is currently used for\
+        //sending notes as part of the MPE protocol and therefore also sends CC 74 messages.\
+        //However this may change in the future.\
+        //Therefore instead use sendMIDI using the note-off status byte value (0x80).\
+        sendMIDI (0x80 + (midiChannel - 1), note_num, velocity);\
+    \}\
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//==============================================================================\
+//Function for drawing/updating the display, called approx 25 times per second.\
+//It can also be used as a timer - here it is used to update the backend sequence.\
+\
+void repaint()\
+\{\
+    //The fillRect and blendRect functions are used many times here.\
+    //They have the following 5 arguments:\
+    // - colour: an RGB (fillRect) or ARGB (blendRect) colour\
+    // - x: the x/horizontal pixel position of the top-left corner of the rectangle,\
+    //      where 0 is the left side of the Lightpad and 14 is the right side.\
+    // - y: the y/vertical pixel position of the top-left corner of the rectangle,\
+    //      where 0 is the top side of the Lightpad and 14 is the bottom side.\
+    // - width: the pixel width of the rectangle to draw, in the range of 1-15.\
+    // - height: the pixel height of the rectangle to draw, in the range of 1-15.\
+    \
+    //first clear the display\
+    clearDisplay();\
+\
+    //==============================================================================\
+    //Draw the top row of sequencer step sliders,\
+    //and the sequencer playhead (if the current step is on the top row)\
+    for (int i = 0; i < 4; ++i)\
+	\{\
+	    //get the slider index/number and value\
+		int sliderIndex  = i;\
+		int sliderValue  = getStepSlider (sliderIndex);\
+		\
+		//Get a brightness value by mapping the step's velocity value (0-1) to a value\
+		//between 5-255 (don't want to map to a brightness value of 0 otherwise the\
+		//slider becomes invisible)\
+		int brightness = int (map (getStepVelocity(sliderIndex), 0.0, 1.0, 5.0, 255.0));\
+		\
+		int sliderColour;\
+		\
+		//work out if the slider number is odd or even\
+		int i_mod = i % 2;\
+		\
+		//if an even number slider\
+		if (i_mod == 0)\
+	    \{\
+	        //Set the slider colour to be cyan with 'brightness' setting the alpha value. \
+		    sliderColour = makeARGB (brightness, 0, 255, 255);\
+	    \}\
+	    //if an odd number slider\
+		else\
+	    \{\
+	        //Set the slider colour to be fuchsia with 'brightness' setting the alpha value. \
+		    sliderColour = makeARGB (brightness, 255, 0, 255);\
+	    \}\
+		\
+	    //Draw the slider using sliderColour, the index and sliderValue.\
+	    //Use blendRect instead of fillRect so that we can use the alpha value of sliderColour.\
+		blendRect (sliderColour, i * 3,  6 - sliderValue, 3, sliderValue);\
+		\
+		//if the sequence is currently playing and this slider is for the current step\
+		if (playingState == true && currentStepNum == sliderIndex)\
+	    \{\
+	        //draw a playhead below the slider to signify this is currently playing step\
+	        fillRect (0x00ff00, i * 3, 6, 3, 1);\
+	    \}\
+	\}\
+	\
+	//==============================================================================\
+	//Draw the bottom row of sequencer step sliders,\
+    //and the sequencer playhead (if the current step is on the bottom row)\
+	for (int i = 0; i < 4; ++i)\
+	\{\
+	    //get the slider index/number and value\
+		int sliderIndex  = i + 4;\
+		int sliderValue  = getStepSlider (sliderIndex);\
+		\
+		//Get a brightness value by mapping the step's velocity value (0-1) to a value\
+		//between 5-255 (don't want to map to a brightness value of 0 otherwise the\
+		//slider becomes invisible)\
+		int brightness = int (map (getStepVelocity(sliderIndex), 0.0, 1.0, 5.0, 255.0));\
+		\
+		int sliderColour;\
+		//work out if the slider number is odd or even\
+		int i_mod = i % 2;\
+		\
+		//if an odd number slider\
+		if (i_mod == 1)\
+	    \{\
+	        //Set the slider colour to be cyan with 'brightness' setting the alpha value. \
+		    sliderColour = makeARGB (brightness, 0, 255, 255);\
+	    \}\
+	    //if an even number slider\
+		else\
+	    \{\
+	        //Set the slider colour to be fuchsia with 'brightness' setting the alpha value. \
+		    sliderColour = makeARGB (brightness, 255, 0, 255); \
+	    \}\
+		\
+	    //Draw the slider using sliderColour, the index and sliderValue.\
+	    //Use blendRect instead of fillRect so that we can use the alpha value of sliderColour.\
+		blendRect (sliderColour, i * 3, 14 - sliderValue, 3, sliderValue);\
+		\
+		if (playingState == true && currentStepNum == sliderIndex)\
+	    \{\
+	        //draw a playhead below the slider to signify this is currently playing step\
+	        fillRect (0x00ff00, i * 3, 14, 3, 1);\
+	    \}\
+	\}\
+	\
+	//==============================================================================\
+	//draw tempo slider based on current tempo slider value\
+	fillRect (0x00ffff, 13, 15 - tempoSlider, 3, tempoSlider);\
+    \
+    //draw 'edit mode' button\
+    fillRect (0x00ffff, 13, 0, 2, 2);\
+    \
+    //draw guide lines between controls\
+    fillRect (0x0000ff, 0, 7, 12, 1); //horizontal line between slider rows\
+    fillRect (0x0000ff, 12, 0, 1, 15); //vertical line between step sliders and tempo slider\
+    fillRect (0x0000ff, 13, 2, 2, 1); //horizontal line between tempo slider and edit mode button\
+    \
+    //==============================================================================\
+    //If not set to MIDI sync mode, process/update the backend sequence\
+    if (midiSync == 0)\
+        processSequenceInternally(); \
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//==============================================================================\
+//Function for handling incoming MIDI messages, called every time a message\
+//is received.\
+\
+void handleMIDI (int byte0, int byte1, int byte2)\
+\{\
+    //if received a MIDI start or continue message\
+    if (byte0 == 250 || byte0 == 251)\
+    \{\
+        //start playing the sequence\
+        playingState = true;\
+        setSequenceTransport();\
+    \}\
+    \
+    //if received a MIDI stop message\
+    else if (byte0 == 252)\
+    \{\
+        //stop playing the sequence\
+        playingState = false;\
+        setSequenceTransport();\
+    \}\
+    \
+    //if received a MIDI clock/timing message\
+    else if (byte0 == 248)\
+    \{\
+        //if midi sync is on and the sequence is currently playing\
+        if (midiSync == 1 && playingState == true)\
+        \{\
+            //increment the number of clock messages we have received\
+            midiClockCounter++;\
+            \
+            //if received 12 clock messages\
+            if (midiClockCounter >= 12)\
+            \{\
+                //reset counter\
+                midiClockCounter = 0;\
+                \
+                //process/trigger the sequence step\
+                processStep();\
+            \}\
+        \} \
+    \}\
+\}\
+\
+//==============================================================================\
+//==============================================================================\
+//==============================================================================\
+//Below is a section of code auto-generated by the BLOCKS Code Image Importer\
+//tool for setting the appearance of the app in BLOCKS Dashboard.\
+\
+/*\
+<display backgroundColour="0xFF00FFFF" textColour ="0xFF000000">\
+    <pixels>\
+        <pixel index="13" colour="0xFF00FFFF" />\
+        <pixel index="14" colour="0xFF00FFFF" />\
+        <pixel index="15" colour="0xFFFF00FF" />\
+        <pixel index="16" colour="0xFFFF00FF" />\
+        <pixel index="17" colour="0xFFFF00FF" />\
+        <pixel index="18" colour="0xFF00FFFF" />\
+        <pixel index="19" colour="0xFF00FFFF" />\
+        <pixel index="20" colour="0xFF00FFFF" />\
+        <pixel index="21" colour="0xFFFF00FF" />\
+        <pixel index="22" colour="0xFFFF00FF" />\
+        <pixel index="23" colour="0xFFFF00FF" />\
+        <pixel index="24" colour="0xFF00FFFF" />\
+        <pixel index="25" colour="0xFF00FFFF" />\
+        <pixel index="26" colour="0xFF00FFFF" />\
+        <pixel index="28" colour="0xFF00FFFF" />\
+        <pixel index="29" colour="0xFF00FFFF" />\
+        <pixel index="30" colour="0xFFFF00FF" />\
+        <pixel index="31" colour="0xFFFF00FF" />\
+        <pixel index="32" colour="0xFFFF00FF" />\
+        <pixel index="33" colour="0xFF00FFFF" />\
+        <pixel index="34" colour="0xFF00FFFF" />\
+        <pixel index="35" colour="0xFF00FFFF" />\
+        <pixel index="36" colour="0xFFFF00FF" />\
+        <pixel index="37" colour="0xFFFF00FF" />\
+        <pixel index="38" colour="0xFFFF00FF" />\
+        <pixel index="39" colour="0xFF00FFFF" />\
+        <pixel index="40" colour="0xFF00FFFF" />\
+        <pixel index="41" colour="0xFF00FFFF" />\
+        <pixel index="43" colour="0xFF00FFFF" />\
+        <pixel index="44" colour="0xFF00FFFF" />\
+        <pixel index="45" colour="0xFFFF00FF" />\
+        <pixel index="46" colour="0xFFFF00FF" />\
+        <pixel index="47" colour="0xFFFF00FF" />\
+        <pixel index="48" colour="0xFF00FFFF" />\
+        <pixel index="49" colour="0xFF00FFFF" />\
+        <pixel index="50" colour="0xFF00FFFF" />\
+        <pixel index="51" colour="0xFFFF00FF" />\
+        <pixel index="52" colour="0xFFFF00FF" />\
+        <pixel index="53" colour="0xFFFF00FF" />\
+        <pixel index="54" colour="0xFF00FFFF" />\
+        <pixel index="55" colour="0xFF00FFFF" />\
+        <pixel index="56" colour="0xFF00FFFF" />\
+        <pixel index="58" colour="0xFF00FFFF" />\
+        <pixel index="59" colour="0xFF00FFFF" />\
+        <pixel index="60" colour="0xFFFF00FF" />\
+        <pixel index="61" colour="0xFFFF00FF" />\
+        <pixel index="62" colour="0xFFFF00FF" />\
+        <pixel index="63" colour="0xFF00FFFF" />\
+        <pixel index="64" colour="0xFF00FFFF" />\
+        <pixel index="65" colour="0xFF00FFFF" />\
+        <pixel index="66" colour="0xFFFF00FF" />\
+        <pixel index="67" colour="0xFFFF00FF" />\
+        <pixel index="68" colour="0xFFFF00FF" />\
+        <pixel index="69" colour="0xFF00FFFF" />\
+        <pixel index="70" colour="0xFF00FFFF" />\
+        <pixel index="71" colour="0xFF00FFFF" />\
+        <pixel index="73" colour="0xFF00FFFF" />\
+        <pixel index="74" colour="0xFF00FFFF" />\
+        <pixel index="75" colour="0xFFFF00FF" />\
+        <pixel index="76" colour="0xFFFF00FF" />\
+        <pixel index="77" colour="0xFFFF00FF" />\
+        <pixel index="78" colour="0xFF00FFFF" />\
+        <pixel index="79" colour="0xFF00FFFF" />\
+        <pixel index="80" colour="0xFF00FFFF" />\
+        <pixel index="81" colour="0xFFFF00FF" />\
+        <pixel index="82" colour="0xFFFF00FF" />\
+        <pixel index="83" colour="0xFFFF00FF" />\
+        <pixel index="88" colour="0xFF00FFFF" />\
+        <pixel index="89" colour="0xFF00FFFF" />\
+        <pixel index="93" colour="0xFF00FFFF" />\
+        <pixel index="94" colour="0xFF00FFFF" />\
+        <pixel index="95" colour="0xFF00FFFF" />\
+        <pixel index="103" colour="0xFF00FFFF" />\
+        <pixel index="104" colour="0xFF00FFFF" />\
+        <pixel index="135" colour="0xFF00FFFF" />\
+        <pixel index="136" colour="0xFF00FFFF" />\
+        <pixel index="137" colour="0xFF00FFFF" />\
+        <pixel index="138" colour="0xFFFF00FF" />\
+        <pixel index="139" colour="0xFFFF00FF" />\
+        <pixel index="140" colour="0xFFFF00FF" />\
+        <pixel index="141" colour="0xFF00FFFF" />\
+        <pixel index="142" colour="0xFF00FFFF" />\
+        <pixel index="143" colour="0xFF00FFFF" />\
+        <pixel index="144" colour="0xFFFF00FF" />\
+        <pixel index="145" colour="0xFFFF00FF" />\
+        <pixel index="146" colour="0xFFFF00FF" />\
+        <pixel index="153" colour="0xFFFF00FF" />\
+        <pixel index="154" colour="0xFFFF00FF" />\
+        <pixel index="155" colour="0xFFFF00FF" />\
+        <pixel index="156" colour="0xFF00FFFF" />\
+        <pixel index="157" colour="0xFF00FFFF" />\
+        <pixel index="158" colour="0xFF00FFFF" />\
+        <pixel index="159" colour="0xFFFF00FF" />\
+        <pixel index="160" colour="0xFFFF00FF" />\
+        <pixel index="161" colour="0xFFFF00FF" />\
+        <pixel index="171" colour="0xFF00FFFF" />\
+        <pixel index="172" colour="0xFF00FFFF" />\
+        <pixel index="173" colour="0xFF00FFFF" />\
+        <pixel index="174" colour="0xFFFF00FF" />\
+        <pixel index="175" colour="0xFFFF00FF" />\
+        <pixel index="176" colour="0xFFFF00FF" />\
+        <pixel index="189" colour="0xFFFF00FF" />\
+        <pixel index="190" colour="0xFFFF00FF" />\
+        <pixel index="191" colour="0xFFFF00FF" />\
+        <pixel index="208" colour="0xFF00FFFF" />\
+        <pixel index="209" colour="0xFF00FFFF" />\
+        <pixel index="223" colour="0xFF00FFFF" />\
+        <pixel index="224" colour="0xFF00FFFF" />\
+    </pixels>\
+</display>\
+*/}
