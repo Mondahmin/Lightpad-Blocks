@@ -7,7 +7,14 @@
     
     <variables>
         <variable name="mode" displayName="Mode" type="int" min="1" max="2" value="1" displaymode="stepper" tooltip="change mode" />
-        
+        <variable name="Colour1" group="Colours" type="colour" value="0xffff0000" />
+        <variable name="Colour2" group="Colours" type="colour" value="0xffffa500" />
+        <variable name="Colour3" group="Colours" type="colour" value="0xffffff00" />
+        <variable name="Colour4" group="Colours" type="colour" value="0xff008000" />
+        <variable name="Colour5" group="Colours" type="colour" value="0xff00ffff" />
+        <variable name="Colour6" group="Colours" type="colour" value="0xff0000ff" />
+        <variable name="Colour7" group="Colours" type="colour" value="0xff900090" />
+        <variable name="Colour8" group="Colours" type="colour" value="0xffffffff" />
     </variables>
 </metadata>
 */
@@ -35,55 +42,112 @@ const int B0 = 0x807ce0e7;
 
 int num;
 int ycord;
-int time;
+int t;
 
 void initialise()
 {
     for (int i = 0; i < 32; ++i) setLocalConfigActiveState (i, false, false);
     num = 0;
-    time = 0;
+    t = 0;
+    
+    initialiseConfig();
+}
+
+void initialiseConfig()
+{
+    setLocalConfigItemRange(20,1,2);
+    setLocalConfigItemRange(Colour1,0x00000000,0xffffffff);
+    setLocalConfigItemRange(Colour2,0x00000000,0xffffffff);
+    setLocalConfigItemRange(Colour3,0x00000000,0xffffffff);
+    setLocalConfigItemRange(Colour4,0x00000000,0xffffffff);
+    setLocalConfigItemRange(Colour5,0x00000000,0xffffffff);
+    setLocalConfigItemRange(Colour6,0x00000000,0xffffffff);
+    setLocalConfigItemRange(Colour7,0x00000000,0xffffffff);
+    setLocalConfigItemRange(Colour8,0x00000000,0xffffffff);
+}
+
+void getColorConfig()
+{
+    //getLocalConfig(Colour1);
+    setLocalConfig(Colour1,Colour1);
+    
 }
 
 void wave_layout()
 {   
-    int t = ycord(getMillisecondCounter()/100);
+    t = ycord(getMillisecondCounter()/100);
     for(int i = 0; i<15; i++)
     {   
-        if(t+i >= 15){
-            fillPixel(B7,i,(t+i)%15);
-            fillPixel(B6,i,((t+i)%15+1)%15);
-            fillPixel(B5,i,((t+i)%15+2)%15);
-            fillPixel(B4,i,((t+i)%15+3)%15);
-            fillPixel(B3,i,((t+i)%15+4)%15);
-            fillPixel(B2,i,((t+i)%15+5)%15);
-            fillPixel(B1,i,((t+i)%15+6)%15);
-            fillPixel(B0,i,((t+i)%15+7)%15);
-            fillPixel(B1,i,((t+i)%15+8)%15);
-            fillPixel(B2,i,((t+i)%15+9)%15);
-            fillPixel(B3,i,((t+i)%15+10)%15);
-            fillPixel(B4,i,((t+i)%15+11)%15);
-            fillPixel(B5,i,((t+i)%15+12)%15);
-            fillPixel(B6,i,((t+i)%15+13)%15);
-            fillPixel(B7,i,((t+i)%15+14)%15);
-            
-        }
-
-        else{
-            fillPixel(B7,i,(t+i)%15);
-            fillPixel(B6,i,(t+i+1)%15);
-            fillPixel(B5,i,(t+i+2)%15);
-            fillPixel(B4,i,(t+i+3)%15);
-            fillPixel(B3,i,(t+i+4)%15);
-            fillPixel(B2,i,(t+i+5)%15);
-            fillPixel(B1,i,(t+i+6)%15);
-            fillPixel(B0,i,(t+i+7)%15);
-            fillPixel(B1,i,(t+i+8)%15);
-            fillPixel(B2,i,(t+i+9)%15);
-            fillPixel(B3,i,(t+i+10)%15);
-            fillPixel(B4,i,(t+i+11)%15);
-            fillPixel(B5,i,(t+i+12)%15);
-            fillPixel(B6,i,(t+i+13)%15);
-            fillPixel(B7,i,(t+i+14)%15);
+        if (mode == 1){
+            if(t+i >= 15){
+                fillPixel(B7,i,(t+i)%15);
+                fillPixel(B6,i,((t+i)%15+1)%15);
+                fillPixel(B5,i,((t+i)%15+2)%15);
+                fillPixel(B4,i,((t+i)%15+3)%15);
+                fillPixel(B3,i,((t+i)%15+4)%15);
+                fillPixel(B2,i,((t+i)%15+5)%15);
+                fillPixel(B1,i,((t+i)%15+6)%15);
+                fillPixel(B0,i,((t+i)%15+7)%15);
+                fillPixel(B0,i,((t+i)%15+8)%15);
+                fillPixel(B1,i,((t+i)%15+9)%15);
+                fillPixel(B2,i,((t+i)%15+10)%15);
+                fillPixel(B3,i,((t+i)%15+11)%15);
+                fillPixel(B4,i,((t+i)%15+12)%15);
+                fillPixel(B5,i,((t+i)%15+13)%15);
+                fillPixel(B6,i,((t+i)%15+14)%15);    
+            }
+            else{
+                fillPixel(B7,i,(t+i)%15);
+                fillPixel(B6,i,(t+i+1)%15);
+                fillPixel(B5,i,(t+i+2)%15);
+                fillPixel(B4,i,(t+i+3)%15);
+                fillPixel(B3,i,(t+i+4)%15);
+                fillPixel(B2,i,(t+i+5)%15);
+                fillPixel(B1,i,(t+i+6)%15);
+                fillPixel(B0,i,(t+i+7)%15);
+                fillPixel(B0,i,(t+i+8)%15);
+                fillPixel(B1,i,(t+i+9)%15);
+                fillPixel(B2,i,(t+i+10)%15);
+                fillPixel(B3,i,(t+i+11)%15);
+                fillPixel(B4,i,(t+i+12)%15);
+                fillPixel(B5,i,(t+i+13)%15);
+                fillPixel(B6,i,(t+i+14)%15);
+            }
+        }else{
+            if(t+i >= 15){
+                fillPixel(Colour1,i,(t+i)%15);
+                fillPixel(Colour2,i,((t+i)%15+1)%15);
+                fillPixel(Colour3,i,((t+i)%15+2)%15);
+                fillPixel(Colour4,i,((t+i)%15+3)%15);
+                fillPixel(Colour5,i,((t+i)%15+4)%15);
+                fillPixel(Colour6,i,((t+i)%15+5)%15);
+                fillPixel(Colour7,i,((t+i)%15+6)%15);
+                fillPixel(Colour8,i,((t+i)%15+7)%15);
+                fillPixel(Colour7,i,((t+i)%15+8)%15);
+                fillPixel(Colour6,i,((t+i)%15+9)%15);
+                fillPixel(Colour5,i,((t+i)%15+10)%15);
+                fillPixel(Colour4,i,((t+i)%15+11)%15);
+                fillPixel(Colour3,i,((t+i)%15+12)%15);
+                fillPixel(Colour2,i,((t+i)%15+13)%15);
+                fillPixel(Colour1,i,((t+i)%15+14)%15);    
+            }
+            else{
+                fillPixel(Colour1,i,(t+i)%15);
+                fillPixel(Colour2,i,(t+i+1)%15);
+                fillPixel(Colour3,i,(t+i+2)%15);
+                fillPixel(Colour4,i,(t+i+3)%15);
+                fillPixel(Colour5,i,(t+i+4)%15);
+                fillPixel(Colour6,i,(t+i+5)%15);
+                fillPixel(Colour7,i,(t+i+6)%15);
+                fillPixel(Colour8,i,(t+i+7)%15);
+                fillPixel(Colour7,i,(t+i+8)%15);
+                fillPixel(Colour6,i,(t+i+9)%15);
+                fillPixel(Colour5,i,(t+i+10)%15);
+                fillPixel(Colour4,i,(t+i+11)%15);
+                fillPixel(Colour3,i,(t+i+12)%15);
+                fillPixel(Colour2,i,(t+i+13)%15);
+                fillPixel(Colour1,i,(t+i+14)%15);
+            }
         }
     }
 }
@@ -94,7 +158,7 @@ int ycord(int T)
     return y;
 }
 
-int Color(int N){
+int touchColor(int N){
     int m = N%7;    
     
     if(m == 0){return red}
@@ -108,7 +172,7 @@ int Color(int N){
 
 void touchStart (int index, float x, float y, float z, float vz)
 {
-    addPressurePoint (Color(num), x, y, z *10.0);
+    addPressurePoint (touchColor(num), x, y, z *10.0);
     ccX = int(map(x, 0.07, 1.93, 0.0, 127.0));//exchange x-coordinate data(0.07~1.93) to (0~127)
     ccY = int(map(y, 0.07, 1.93, 0.0, 127.0));//exchange y-coordinate data(0.07~1.93) to (0~127)
     ccZ = int(map(z, 0.0, 1.0, 0.0, 127.0));//exchange z-coordinate(pressure) data(0.0~1.0) to (0~127)
@@ -121,7 +185,7 @@ void touchStart (int index, float x, float y, float z, float vz)
 
 void touchMove (int index, float x, float y, float z, float vz)
 {
-    addPressurePoint (Color(num), x, y, z *10.0);
+    addPressurePoint (touchColor(num), x, y, z *10.0);
     ccX = int(map(x, 0.07, 1.93, 0.0, 127.0));//exchange x-coordinate data(0.07~1.93) to (0~127)
     ccY = int(map(y, 0.07, 1.93, 0.0, 127.0));//exchange y-coordinate data(0.07~1.93) to (0~127)
     ccZ = int(map(z, 0.0, 1.0, 0.0, 127.0));//exchange z-coordinate(pressure) data(0.0~1.0) to (0~127)
@@ -149,18 +213,25 @@ void touchEnd (int touchIndex, float x, float y, float z, float vz)
 void handleButtonDown(int index)
 {
     if (mode == 1)
+    {
         mode = 2;
-    else mode = 1;
-    
+        setLocalConfig(20,2);
+    }
+    else 
+    {
+        mode = 1;
+        setLocalConfig(20,1);
+    }
 }
 
 
 void repaint()
 {
     clearDisplay();
+    getColorConfig();
     wave_layout();
     drawPressureMap();
     fadePressureMap();
     
-    log(time);
+    log(t);
 }
