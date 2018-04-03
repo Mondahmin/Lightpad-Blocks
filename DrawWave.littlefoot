@@ -52,7 +52,7 @@ void initialise()
 
 void initialiseConfig()
 {
-    setLocalConfigItemRange(20,1,2);
+    setLocalConfigItemRange(20,0,1);
     setLocalConfig(20,1);
 }
 
@@ -62,7 +62,7 @@ void wave_layout()
     t = ycord(getMillisecondCounter()/100);
     for(int i = 0; i<15; i++)
     {   
-        if (getLocalConfig(20) == 1){
+        if (getLocalConfig(20) == 0 || mode == 1){
             if(t+i >= 15){
                 fillPixel(B7,i,(t+i)%15);
                 fillPixel(B6,i,((t+i)%15+1)%15);
@@ -96,7 +96,8 @@ void wave_layout()
                 fillPixel(B5,i,(t+i+13)%15);
                 fillPixel(B6,i,(t+i+14)%15);
             }
-        }else{
+        }
+        else if (getLocalConfig(20) == 1 || mode == 2){
             if(t+i >= 15){
                 fillPixel(Colour1,i,(t+i)%15);
                 fillPixel(Colour2,i,((t+i)%15+1)%15);
@@ -130,6 +131,10 @@ void wave_layout()
                 fillPixel(Colour2,i,(t+i+13)%15);
                 fillPixel(Colour1,i,(t+i+14)%15);
             }
+        }
+        else
+        {
+            
         }
     }
 }
@@ -173,13 +178,14 @@ void handleButtonDown(int index)
     if (getLocalConfig(20) == 1)
     {
         //mode = 2;
-        setLocalConfig(20,2);
+        setLocalConfig(20,0);
     }
     else 
     {
         //mode = 1;
         setLocalConfig(20,1);
     }
+    mode = getLocalConfig(20)+1;
 }
 
 void repaint()
