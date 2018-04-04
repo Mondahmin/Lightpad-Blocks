@@ -4,14 +4,14 @@
     
     <variables>
         <variable name="mode" displayName="Mode" type="int" min="1" max="2" value="1" displaymode="stepper" tooltip="change mode" />
-        <variable name="Colour1" type="colour" value="0xff0000" />
-        <variable name="Colour2" type="colour" value="0xffa500" />
-        <variable name="Colour3" type="colour" value="0xffff00" />
-        <variable name="Colour4" type="colour" value="0x008000" />
-        <variable name="Colour5" type="colour" value="0x00ffff" />
-        <variable name="Colour6" type="colour" value="0x0000ff" />
-        <variable name="Colour7" type="colour" value="0x900090" />
-        <variable name="Colour8" type="colour" value="0xffffff" />
+        <variable name="Colour1" type="colour" value="0x001f72" />
+        <variable name="Colour2" type="colour" value="0x00287b" />
+        <variable name="Colour3" type="colour" value="0x004b9b" />
+        <variable name="Colour4" type="colour" value="0x0069b6" />
+        <variable name="Colour5" type="colour" value="0x0081ba" />
+        <variable name="Colour6" type="colour" value="0x0095bd" />
+        <variable name="Colour7" type="colour" value="0x24b5cd" />
+        <variable name="Colour8" type="colour" value="0x83e5ea" />
         
     </variables>
 </metadata>
@@ -31,13 +31,13 @@ const int purple = 0xff900090;
 const int white = 0xffffffff;
 
 const int B7 = 0x80001f72;
-const int B6 = 0x80003183;
-const int B5 = 0x800054a4;
-const int B4 = 0x80006bb7;
-const int B3 = 0x80006cb7;
-const int B2 = 0x800097be;
-const int B1 = 0x801aafc8;
-const int B0 = 0x807ce0e7;
+const int B6 = 0x8000287b;
+const int B5 = 0x80004b9b;
+const int B4 = 0x800069b6;
+const int B3 = 0x800081ba;
+const int B2 = 0x800095bd;
+const int B1 = 0x8024b5cd;
+const int B0 = 0x8083e5ea;
 
 int num;
 int ycord;
@@ -195,6 +195,7 @@ void repaint()
     drawPressureMap();
     fadePressureMap();
     
-    log(t);
-    log(num);
+    //log(t);
+    //log(num);
+    log(mode);
 }
