@@ -4,15 +4,14 @@
     
     <variables>
         <variable name="mode" displayName="Mode" type="int" min="1" max="2" value="1" displaymode="stepper" tooltip="change mode" />
-        <variable name="Colour1" type="colour" value="0x001f72" />
-        <variable name="Colour2" type="colour" value="0x00287b" />
-        <variable name="Colour3" type="colour" value="0x004b9b" />
-        <variable name="Colour4" type="colour" value="0x0069b6" />
-        <variable name="Colour5" type="colour" value="0x0081ba" />
-        <variable name="Colour6" type="colour" value="0x0095bd" />
-        <variable name="Colour7" type="colour" value="0x24b5cd" />
-        <variable name="Colour8" type="colour" value="0x83e5ea" />
-        
+        <variable name="Colour1" type="colour" value="0x83e5ea" />
+        <variable name="Colour2" type="colour" value="0x24b5cd" />
+        <variable name="Colour3" type="colour" value="0x0095bd" />
+        <variable name="Colour4" type="colour" value="0x0081ba" />
+        <variable name="Colour5" type="colour" value="0x0069b6" />
+        <variable name="Colour6" type="colour" value="0x004b9b" />
+        <variable name="Colour7" type="colour" value="0x00287b" />
+        <variable name="Colour8" type="colour" value="0x001f72" />    
     </variables>
 </metadata>
 */
@@ -64,37 +63,25 @@ void wave_layout()
     {   
         if (getLocalConfig(20) == 0 || mode == 1){
             if(t+i >= 15){
-                fillPixel(Colour1,i,(t+i)%5);
-                fillPixel(Colour2,i,((t+i)%15+1)%5+1);
-                fillPixel(Colour3,i,((t+i)%15+2)%5+2);
-                fillPixel(Colour4,i,((t+i)%15+3)%5+3);
-                fillPixel(Colour5,i,((t+i)%15+4)%5+4);
-                fillPixel(Colour6,i,((t+i)%15+5)%5+5);
-                fillPixel(Colour7,i,((t+i)%15+6)%5+6);
-                fillPixel(Colour8,i,((t+i)%15+7)%5+7);
-                fillPixel(Colour7,i,((t+i)%15+8)%5+8);
-                fillPixel(Colour6,i,((t+i)%15+9)%5+9);
-                fillPixel(Colour5,i,((t+i)%15+10)%5+10);
-                fillPixel(Colour4,i,((t+i)%15+11)%5+11);
-                fillPixel(Colour3,i,((t+i)%15+12)%5+12);
-                fillPixel(Colour2,i,((t+i)%15+13)%5+13);
-                fillPixel(Colour1,i,((t+i)%15+14)%5+14);
+                fillPixel(Colour1,i,getRandomInt(5)+2);
+                fillPixel(Colour2,i,getRandomInt(5)+3);
+                fillPixel(Colour3,i,getRandomInt(5)+4);
+                fillPixel(Colour4,i,getRandomInt(5)+5);
+                fillPixel(Colour5,i,getRandomInt(5)+6);
+                fillPixel(Colour6,i,getRandomInt(5)+7);
+                fillPixel(Colour7,i,getRandomInt(5)+8);
+                fillPixel(Colour8,i,getRandomInt(5)+9);
+               
             }else{
-                fillPixel(Colour1,i,(t+i)%5);
-                fillPixel(Colour2,i,(t+i+1)%5+1);
-                fillPixel(Colour3,i,(t+i+2)%5+2);
-                fillPixel(Colour4,i,(t+i+3)%5+3);
-                fillPixel(Colour5,i,(t+i+4)%5+4);
-                fillPixel(Colour6,i,(t+i+5)%5+5);
-                fillPixel(Colour7,i,(t+i+6)%5+6);
-                fillPixel(Colour8,i,(t+i+7)%5+7);
-                fillPixel(Colour7,i,(t+i+8)%5+8);
-                fillPixel(Colour6,i,(t+i+9)%5+9);
-                fillPixel(Colour5,i,(t+i+10)%5+10);
-                fillPixel(Colour4,i,(t+i+11)%5+11);
-                fillPixel(Colour3,i,(t+i+12)%5+12);
-                fillPixel(Colour2,i,(t+i+13)%5+13);
-                fillPixel(Colour1,i,(t+i+14)%5+14);
+                fillPixel(Colour1,i,getRandomInt(5)+2);
+                fillPixel(Colour2,i,getRandomInt(5)+3);
+                fillPixel(Colour3,i,getRandomInt(5)+4);
+                fillPixel(Colour4,i,getRandomInt(5)+5);
+                fillPixel(Colour5,i,getRandomInt(5)+6);
+                fillPixel(Colour6,i,getRandomInt(5)+7);
+                fillPixel(Colour7,i,getRandomInt(5)+8);
+                fillPixel(Colour8,i,getRandomInt(5)+9);
+               
             }
         }
         else if (getLocalConfig(20) == 1 || mode == 2){
